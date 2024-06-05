@@ -14,6 +14,7 @@ import torchvision.models as models
 import json
 from peft import (
     get_peft_model,
+    prepare_model_for_kbit_training, #to enable training in 4bit format
     LoraConfig,
     PrefixTuningConfig,
     PromptEncoderConfig,
@@ -145,7 +146,11 @@ class QA_model(nn.Module):
         print("Setup Model")
         model = transformers.LlamaForCausalLM.from_pretrained(
            model_args.model_path,
+            # Load the model in a reduced 4-bit precision format to decrease memory usage and potentially increase processing speed.
+           load_in_4bit=True
         )
+        # Get the model ready for k-bit training to save on memory and keep things running smoothly.
+        model = prepare_model_for_kbit_training(model)
         if model_args.checkpointing:
             model.gradient_checkpointing_enable()
             model.enable_input_require_grads()
@@ -185,7 +190,7 @@ class QA_model(nn.Module):
         
         B = images.shape[0]
         ### images encoding ###
-        x = self.image_encoder(images)
+        x = self.image_encoder(images.to(torch.float16))
         features = x.transpose(0,1) #patch_num b dim
         
         ### Q-Former ###
@@ -201,9 +206,14 @@ class QA_model(nn.Module):
         features = rearrange(features,'(b n) d -> b n d',b=B)
         ### LLM ###
         input_embedding = self.llamacasual.get_input_embeddings()(input_ids)
+        
+        # Make sure features and input embeddings are on the same device to keep things smooth.
+        features = features.to(input_embedding.device)
+        
         input_embedding = torch.cat([features,input_embedding], dim=1)
         
-        output = self.llamacasual(inputs_embeds = input_embedding, labels = labels)
+        # Send the prepared inputs to our language model to get the predictions.
+        output = self.llamacasual(inputs_embeds = input_embedding.to(self.llamacasual.dtype), labels = labels)
         
         return output
 
@@ -211,7 +221,8 @@ class QA_model(nn.Module):
         with torch.no_grad():
             B = images.shape[0]
             ### images encoding ###
-            x = self.image_encoder(images)
+            # Adjust the image data type to match our encoder
+            x = self.image_encoder(images.to(self.image_encoder.dtype))
             features = x.transpose(0,1) #patch_num b dim
             
             ### Q-Former ###

@@ -58,11 +58,14 @@ def main():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     
     print("Setup Data")
-    Train_dataset = PMC_QA_Dataset(data_args.img_dir, data_args.Train_csv_path, data_args.tokenizer_path, text_type = 'caption')
-    Eval_dataset = PMC_QA_Dataset(data_args.img_dir, data_args.Eval_csv_path, data_args.tokenizer_path, text_type = 'caption')
+    
+    # Here the seq_length has been changed to 256 (the default value is 512)
+    Train_dataset = PMC_QA_Dataset(data_args.img_dir, data_args.Train_csv_path, data_args.tokenizer_path, text_type = 'caption', seq_length=256)
+    Eval_dataset = PMC_QA_Dataset(data_args.img_dir, data_args.Eval_csv_path, data_args.tokenizer_path, text_type = 'caption', seq_length=256)
 
     print("Setup Model")
-    model = QA_model(model_args)
+    # We set the model to fp16
+    model = QA_model(model_args).to(torch.float16)
     
     run_name_root = training_args.run_name
     output_dir_root = training_args.output_dir
