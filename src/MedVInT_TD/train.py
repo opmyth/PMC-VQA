@@ -48,7 +48,7 @@ class TrainingArguments(transformers.TrainingArguments):
     output_dir: Optional[str] = field(default="./Results")
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
-    per_device_train_batch_size = 1
+    # per_device_train_batch_size = 1
     
     
 def main():
