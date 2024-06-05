@@ -22,14 +22,15 @@ class PMC_QA_Dataset(Dataset):
         self.tokenizer.eos_token_id=1
         self.img_padding = [-100 for i in range(img_tokens)]
         self.attn_padding = [1 for i in range(img_tokens)]
-        self.H = 512
-        self.W = 512
+        self.H = 255
+        self.W = 255
         self.C = 3
         self.text_type = text_type
         self.no_image = no_image
         normalize = transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        self.transform = transforms.Compose([                        
-                transforms.RandomResizedCrop((self.H,self.W),scale=(0.2, 1.0), interpolation=Image.BICUBIC),
+        self.transform = transforms.Compose([         
+                transforms.RandomResizedCrop((self.H,self.W),scale=(0.2, 1.0), interpolation=Image.BICUBIC),               
+                # transforms.Resize((512, 512)),
                 transforms.RandomHorizontalFlip(),
                 RandomAugment(2,7,isPIL=True,augs=['Identity','AutoContrast','Equalize','Brightness','Sharpness',
                                                 'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Rotate']),     
@@ -92,17 +93,17 @@ class PMC_QA_Dataset(Dataset):
         Choice_D = sample['Choice D']
         caption = sample['Caption']
         choice_list = [Choice_A,Choice_B,Choice_C,Choice_D]
-        Anwser = sample['Anwser']
+        Answer = sample['Answer']
         
         if not self.no_image:
         ##### read image pathes #####
-            img_path = self.img_root + sample['Figure_path']
+            img_path = self.img_root + "/" + sample['Figure_path']
             img = PIL.Image.open(img_path).convert('RGB') 
             image = self.transform(img) 
         
         #Question_id = np.array(self.tokenizer(Question)['input_ids'])
         if self.mode == 'Train':
-            pre_text,final_o = self.random_answer(Question,choice_list,Anwser,caption)
+            pre_text,final_o = self.random_answer(Question,choice_list,Answer,caption)
             
             final_o = self.tokenizer(final_o)
             input_ids = final_o['input_ids']
@@ -144,8 +145,8 @@ class PMC_QA_Dataset(Dataset):
             #random.shuffle(choice_list)
             reflect = {0:' A:',1:' B:',2:' C:',3:' D:' }
             for i,choice in enumerate(choice_list):
-                if Anwser == choice:
-                    Anwser = Anwser.replace(' A:',reflect[i]).replace(' B:',reflect[i]).replace(' C:',reflect[i]).replace(' D:',reflect[i])
+                if Answer == choice:
+                    Answer = Answer.replace(' A:',reflect[i]).replace(' B:',reflect[i]).replace(' C:',reflect[i]).replace(' D:',reflect[i])
                 if Choice_A == choice:
                     Choice_A = Choice_A.replace(' A:',reflect[i]).replace(' B:',reflect[i]).replace(' C:',reflect[i]).replace(' D:',reflect[i])
                 if Choice_B == choice:
@@ -160,7 +161,7 @@ class PMC_QA_Dataset(Dataset):
                     'input_ids': 'Question: '+ Question + 'Choices:' + Combined_choice +'The Answer is:',
                     'img_path': sample['Figure_path'],       
                     'images': image,
-                    'labels': Anwser,
+                    'labels': Answer,
                     'Choice_A': Choice_A,
                     'Choice_B': Choice_B,
                     'Choice_C': Choice_C,
@@ -170,7 +171,7 @@ class PMC_QA_Dataset(Dataset):
                 item = {
                     'input_ids': 'Question: '+ Question + 'Choices:' + Combined_choice +'The Answer is:',
                     'img_path': sample['Figure_path'],       
-                    'labels': Anwser,
+                    'labels': Answer,
                     'Choice_A': Choice_A,
                     'Choice_B': Choice_B,
                     'Choice_C': Choice_C,
@@ -182,7 +183,7 @@ class PMC_QA_Dataset(Dataset):
                         'input_ids': 'Question: '+ Question + 'The Answer is:',
                         'img_path': sample['Figure_path'],       
                         'images': image,
-                        'labels': Anwser,
+                        'labels': Answer,
                         'Choice_A': Choice_A,
                         'Choice_B': Choice_B,
                         'Choice_C': Choice_C,
@@ -193,7 +194,7 @@ class PMC_QA_Dataset(Dataset):
                     item = {
                         'input_ids': 'Question: '+ Question + 'The Answer is:',
                         'img_path': sample['Figure_path'],       
-                        'labels': Anwser,
+                        'labels': Answer,
                         'Choice_A': Choice_A,
                         'Choice_B': Choice_B,
                         'Choice_C': Choice_C,

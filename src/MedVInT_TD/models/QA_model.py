@@ -94,9 +94,10 @@ class QA_model(nn.Module):
             self.vision_model = nn.Sequential(*list(vision_model.children())[:-2])
             num_ftrs = 1024
             
-        if self.Vision_module == "CLIP":
-            self.vision_model = transformers.CLIPVisionModel.from_pretrained(model_args.visual_model_path,ignore_mismatched_sizes=True)
+        if self.Vision_module == 'CLIP':
+            self.vision_model = transformers.CLIPVisionModel.from_pretrained(model_args.visual_model_path, ignore_mismatched_sizes=True)
             num_ftrs = 768
+
         if self.Vision_module == 'Scratch':
             self.vision_model = transformers.CLIPVisionModel(config=CLIPVisionConfig(image_size=512))
             num_ftrs = 768
@@ -176,6 +177,9 @@ class QA_model(nn.Module):
         if self.Vision_module == 'Scratch':
             out_emb = self.vision_model(pixel_values = xis)['last_hidden_state'][:,1:,:] # dismiss the cls token dim=b n d
         return out_emb
+
+
+
     
     def forward(self,input_ids,images,labels = None):
         

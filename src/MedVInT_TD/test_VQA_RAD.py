@@ -6,7 +6,7 @@ import tqdm.auto as tqdm
 from typing import Optional
 import transformers
 from Dataset.VQA_RAD_Dataset import VQA_RAD_Dataset
-from model.QA_model import QA_model
+from models.QA_model import QA_model
 from transformers import Trainer
 from dataclasses import dataclass, field
 import os

@@ -6,7 +6,7 @@ import tqdm.auto as tqdm
 from typing import Optional
 import transformers
 from Dataset.PMC_QA_Dataset import PMC_QA_Dataset
-from model.QA_model import QA_model
+from models.QA_model import QA_model
 from transformers import Trainer
 from dataclasses import dataclass, field
 import os
@@ -15,7 +15,7 @@ import torch
 import wandb      
 @dataclass
 class ModelArguments:
-    model_path: Optional[str] = field(default="./LLAMA/checkpoint-189000/")
+    model_path: Optional[str] = field(default="/home/ubuntu/Work/Assets/LLAMA-7B-5-epochs")
     ## Q_former ##
     N: Optional[int] = field(default=12)
     H: Optional[int] = field(default=12)
@@ -27,7 +27,7 @@ class ModelArguments:
     checkpointing: Optional[bool] = field(default=True)
     ## Image Encoder ##
     Vision_module: Optional[str] = field(default='CLIP')
-    visual_model_path: Optional[str] = field(default='./img_checkpoint/CLIP/clip-vit-base-patch32')
+    visual_model_path: Optional[str] = field(default='/home/ubuntu/Work/Assets/CLIP')
     #visual_model_config: Optional[str] = field(default='./img_checkpoint/RN50_fusion4.json')
     ## Peft ##
     is_lora: Optional[bool] = field(default=True)
@@ -36,11 +36,11 @@ class ModelArguments:
 
 @dataclass
 class DataArguments:
-    img_dir: str = field(default='./PMC_OA_papers/figures/', metadata={"help": "Path to the training data."})
+    img_dir: str = field(default='/home/ubuntu/Work/Training_Data/images_2', metadata={"help": "Path to the training data."})
     pred_type: str = field(default='choice')
-    Train_csv_path: str = field(default='./Data/final_train/final_train.csv', metadata={"help": "Path to the training data."})
-    Eval_csv_path: str = field(default='./Data/final_train/final_test.csv', metadata={"help": "Path to the training data."})
-    tokenizer_path: str = field(default='./LLAMA/tokenizer', metadata={"help": "Path to the training data."})
+    Train_csv_path: str = field(default='/home/ubuntu/Work/Training_Data/train_2.csv', metadata={"help": "Path to the training data."})
+    Eval_csv_path: str = field(default='/home/ubuntu/Work/Training_Data/test_2.csv', metadata={"help": "Path to the training data."})
+    tokenizer_path: str = field(default='/home/ubuntu/Work/Assets/LLAMA-7B-5-epochs', metadata={"help": "Path to the training data."})
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
@@ -48,9 +48,12 @@ class TrainingArguments(transformers.TrainingArguments):
     output_dir: Optional[str] = field(default="./Results")
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
+    per_device_train_batch_size = 1
     
     
 def main():
+
+    torch.cuda.empty_cache()
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     
@@ -71,7 +74,7 @@ def main():
     trainer = Trainer(model=model, 
                       train_dataset = Train_dataset, 
                       eval_dataset = Eval_dataset,
-                      args=training_args,
+                      args=training_args
                       )
     try:
         trainer.train(resume_from_checkpoint=True)

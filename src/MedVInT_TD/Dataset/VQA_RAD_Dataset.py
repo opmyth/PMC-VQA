@@ -59,7 +59,7 @@ class VQA_RAD_Dataset(Dataset):
     def __getitem__(self, idx):
         sample = self.data.iloc[idx]
         Question  = sample['question']
-        Anwser = sample['answer']
+        Answer = sample['answer']
         
         ##### read image pathes #####
         img_path = self.img_root + sample['img_name']
@@ -67,7 +67,7 @@ class VQA_RAD_Dataset(Dataset):
         image = self.transform(img) 
         
         if self.mode == 'Train':
-            pre_text,final_o = self.random_answer(Question,Anwser)
+            pre_text,final_o = self.random_answer(Question,Answer)
             
             final_o = self.tokenizer(final_o)
             input_ids = final_o['input_ids']
@@ -101,7 +101,7 @@ class VQA_RAD_Dataset(Dataset):
                 'input_ids': 'Question: '+ Question + 'The Answer is:',
                 'img_path': sample['img_name'],       
                 'images': image,
-                'labels': Anwser,
+                'labels': Answer,
             }
         return item
         
